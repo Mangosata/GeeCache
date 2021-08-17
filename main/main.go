@@ -74,4 +74,6 @@ func main() {
 		go startAPIServer(apiAddr, gee)
 	}
 	startCacheServer(addrMap[port], []string(addrs), gee)
+
+	fmt.Println("test git")
 }
