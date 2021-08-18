@@ -1,8 +1,10 @@
-package GeeCache
+package geecache
 
 import (
-	"GeeCache/consistenthash"
+	"example/main/geecache/consistenthash"
+	"example/main/geecache/geecachepb"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -58,42 +60,43 @@ func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	view, err := group.Get(key)
+	body, err := proto.Marshal(&geecachepb.Response{Value: view.ByteSlice()})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write(view.ByteSlice())
+	w.Write(body)
 }
 
 type httpGetter struct {
 	baseURL string
 }
 
-func (h *httpGetter) Get(group string, key string) ([]byte, error) {
+func (h *httpGetter) Get(in *geecachepb.Request, out *geecachepb.Response) error {
 	u := fmt.Sprintf(
 		"%v%v/%v",
 		h.baseURL,
-		url.QueryEscape(group),
-		url.QueryEscape(key),
+		url.QueryEscape(in.GetGroup()),
+		url.QueryEscape(in.GetKey()),
 	)
 	res, err := http.Get(u)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("server returned: %v", res.Status)
+		return fmt.Errorf("server returned: %v", res.Status)
 	}
 
 	bytes, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading response body: %v", err)
+	if err = proto.Unmarshal(bytes, out); err != nil {
+		return fmt.Errorf("reading response body: %v", err)
 	}
 
-	return bytes, nil
+	return nil
 }
 
 func (p *HTTPPool) Set(peers ...string) {
