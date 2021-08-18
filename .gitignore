@@ -133,3 +133,6 @@ fabric.properties
 /.idea/
 /pkg/mod/cache/
 /main/server
+/main/geecache/geecachepb/geecachepb.pb.go
+/go.sum
+/main/pkg/
