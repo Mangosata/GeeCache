@@ -132,3 +132,4 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/go,jetbrains
 /.idea/
 /pkg/mod/cache/
+/main/server
